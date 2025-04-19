@@ -1,0 +1,32 @@
+---
+# The purpose of check_inputs.yaml is to check that the inputs to this Role (as should
+# be defined in defaults/main.yaml) are valid. The expectation is that check_inputs.yaml
+# will be called against all roles EARLY in a playbook, so that we can fail the playbook
+# early whenever user inputs are invalid. Note that the tasks defined here are intended
+# to run ON THE ANSIBLE CONTROLLER, so you should NOT try to check inputs against the
+# target environment (i.e. DO NOT try to check whether paths exist or URLs exist. Even
+# though it might seem reasonable to test a URL, we cannot assume that the Ansible
+# Controller will have the same access rights to that URL as will the intended target
+# host). Instead then, we are here validating the inputs IN ISOLATION FROM the target
+# environment. This should have the advantage of making the checks quick to run and so
+# minimising any impact on playbook performance.
+#
+# Note that another impact of this approach is that you will NOT be using any windows
+# modules in this file!
+# 
+# Most of the tasks in this file are likely to use the ansible.builtin.assert module.
+#
+# Examples of things to check are:
+# If using win_unzip, check the windows artifact is a zip file (otherwise win_unzip is
+# likely to lack what it needs to uncompress it, and you should NOT install the PSCX
+# module as it will clobber Powershell functions on the target host)
+# Check that windows paths are valid windows paths and linux paths are valid linux paths
+# Check that all paths point to a directory, and not to root (drives)
+# Check that the artifact URL looks like a valid URL - warn if it is not using https
+# Check for correct variable type (e.g. that boolean variables have boolean values)
+# Apply any other checks that you can think of. This might include dependency checks
+# between some of your variables (e.g. if the value of x is y, then the value of z
+# must fall within a certain value range)
+
+- ansible.builtin.debug:
+    msg: TODO

@@ -1,0 +1,15 @@
+---
+# The purpose of apply.yaml is to...
+#   - download and install the component (if necessary)
+#   - configure the component (may include system actions, e.g. setting Env Variables)
+#   - remove the component's deployment artifact IF REQUESTED
+#     (<role>.artifact.remove == yes)
+# Downloading and installing can be expensive operations, so generally we do not rely on
+# module idempotence alone, but rather explicitly check the need for these actions.
+# Where there is a need to break apply actions into more than one file (e.g. because
+# there are lengthy task sequences for optional configurations), the additional files
+# should be placed in a subfolder named 'apply' and their inclusion orchestrated
+# from here.
+
+- ansible.builtin.debug:
+    msg: TODO

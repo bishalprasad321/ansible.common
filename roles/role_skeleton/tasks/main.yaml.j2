@@ -1,0 +1,114 @@
+---
+# The purpose of main.yaml is to...
+#   - identify the operating system of the host, so as to perform the right set of tasks
+#   - include dependant roles at the appropriate time
+#   - identify the specific tasks to perform, given the inputs of {{ role_name }}_manage and intent
+#   - include the derived task file
+# This file is unlikely to require change. However, if your component is intended for a
+# single platform (either windows or linux), you may wish to add validation that the
+# platform is correct, and to delete the unnecessary subdirectory (windows or linux).
+# Validation that the platform is windows is shown as a commented-out section below. If
+# the required platform is linux, simply change it accordingly.
+
+- name: Ensure operational modes are compatible
+  ansible.builtin.assert:
+    that:
+      - not (intent == 'test' and ansible_check_mode)
+    success_msg: Operational modes are compatible
+    fail_msg: Cannot run a TEST in PLAN mode
+    quiet: '{% raw %}{{ {% endraw %}ansible_verbosity == 0{% raw %} }}{% endraw %}'
+
+- name: Include dependencies for when not a 'destroy'
+  ansible.builtin.include_role:
+    name: '{% raw %}{{ {% endraw %}{{ role_name }}_dep.name{% raw %} }}{% endraw %}'
+    public: yes
+  loop: '{% raw %}{{ {% endraw %}{{ role_name }}_dependencies | default([], True){% raw %} }}{% endraw %}'
+  loop_control:
+    loop_var: {{ role_name }}_dep
+  when:
+    - intent != 'destroy'
+    - ({{ role_name }}_dep.when | default(true)) is truthy
+    - not ((check_inputs | default(False, True)) and (hostvars[inventory_hostname][{{ role_name }}_dep.name | split('.') | last + '_inputs_check_completed'] | default(False, True)))
+    - not ((check_environment | default(False, True)) and (hostvars[inventory_hostname][{{ role_name }}_dep.name | split('.') | last + '_env_check_completed'] | default(False, True)))
+    - not (hostvars[inventory_hostname][{{ role_name }}_dep.name | split('.') | last + '_completed'] | default(False, True))
+  
+# check_inputs should not require knowledge of host platform (i.e. facts)
+- block:
+    - name: Check the inputs if requested
+      ansible.builtin.include_tasks:
+        file: check_inputs.yaml
+      when: not {{ role_name }}_inputs_check_completed | default(False, True)
+
+    - name: Identify when this role has completed an inputs check
+      ansible.builtin.set_fact:
+        {{ role_name }}_inputs_check_completed: yes
+
+  when: check_inputs | default(False, True)
+
+- block:
+  - name: Get the host platform (windows or linux)
+    ansible.builtin.set_fact:
+      platform: >-
+        {% raw %}{{ {% endraw %}(ansible_os_family | lower == 'windows') |
+          ternary('windows', 'linux')
+        {% raw %}}}{% endraw %}
+
+
+  # For products that must always live on just one platform we need to validate it
+  # In such circumstances, we can delete the relevant platform subfolder (e.g. linux)
+  # Example validation code:
+  # - name: Ensure this is the correct type of Operating System
+  #   ansible.builtin.assert:
+  #     that:
+  #       - platform == 'windows'
+  #     success_msg: The target operating system is {% raw %}{{ {% endraw %}platform{% raw %} }}{% endraw %}.
+  #     fail_msg: The target operating system is of the wrong type ({% raw %}{{ {% endraw %}platform{% raw %} }}{% endraw %}). Must be Windows.
+  #   when: not (check_inputs | default(False, True))
+
+  - name: Get the tasks to perform, given the intent and whether the component is managed
+    ansible.builtin.set_fact:
+      tasks_to_perform: >-
+        {% raw %}{{ {% endraw %}({{ role_name }}_manage |
+            ternary(managed_tasks,
+                    unmanaged_tasks)
+           )[intent]
+        {% raw %}}}{% endraw %}
+
+
+  - name: Call the platform-specific tasks to perform
+    ansible.builtin.include_tasks:
+      file: >-
+        {% raw %}{{ {% endraw %}(check_environment | default(False, True))
+              | ternary(([ platform, 'check_environment.yaml'] | path_join),
+                        ([ platform, tasks_to_perform ] | path_join))
+        {% raw %}}}{% endraw %}
+
+
+  - name: Include dependencies for a 'destroy'
+    ansible.builtin.include_role:
+      name: '{% raw %}{{ {% endraw %}{{ role_name }}_dep_for_destroy.name{% raw %} }}{% endraw %}'
+      public: yes
+    loop: '{% raw %}{{ {% endraw %}{{ role_name }}_dependencies | default([], True){% raw %} }}{% endraw %}'
+    loop_control:
+      loop_var: {{ role_name }}_dep_for_destroy
+    when:
+      - intent == 'destroy'
+      - ({{ role_name }}_dep_for_destroy.when | default(true)) is truthy
+      - not ((check_environment | default(False, True)) and (hostvars[inventory_hostname][{{ role_name }}_dep_for_destroy.name | split('.') | last + '_env_check_completed'] | default(False, True)))
+      - not (hostvars[inventory_hostname][{{ role_name }}_dep_for_destroy.name | split('.') | last + '_completed'] | default(False, True))
+
+  - name: Identify when this role has completed an environment check
+    ansible.builtin.set_fact:
+      {{ role_name }}_env_check_completed: yes
+    when: check_environment | default(False, True)
+  
+  - name: Identify when this role has completed its main work
+    ansible.builtin.set_fact:
+      {{ role_name }}_completed: yes
+      cacheable: yes
+    when: not check_environment | default(False, True)
+  
+  when:
+    - not check_inputs | default(False, True)
+    - not ((check_environment | default(False, True)) and ({{ role_name }}_env_check_completed | default(False, True)))
+    - not ({{ role_name }}_completed | default(False, True))

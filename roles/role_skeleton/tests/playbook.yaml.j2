@@ -1,0 +1,53 @@
+---
+# The purpose of this playbook is to provide a quick test for the role. It depends, as
+# will all playbooks, on certain files for inputs:
+#  - inventory/inventory.yaml - holds details of target hosts and their connection params
+#  - inventory/group_vars/all.yaml - holds values to override those in <role>/defaults/main.yaml
+# As the inventory.yaml is templated, it takes the values for host addresses, user names,
+# passwords and/or SSH keys from environment variables. By setting those environment
+# variables appropriately for your target environment, and by checking / altering the
+# values in group_vars/all.yaml, as appropriate, you can run a quick test of this role.
+
+# We first delegate the checking of user input to each role in the play
+# Provided check_inputs only uses plugins that run on the Ansible Controller (such as
+# ansible.builtin.assert, ansible.builtin.set_fact or ansible.builtin.debug),
+# we don't need facts from the target environment and so can greatly speed the
+# performance of these checks.
+- name: Check Inputs for {{ role_name }} [SYNC]
+  hosts: {{ role_name }}
+  gather_facts: no
+  run_once: yes
+  vars:
+    check_inputs: yes
+  roles:
+    - '{% raw %}{{ playbook_dir | dirname | dirname | dirname | basename }}{% endraw %}.{{ role_name }}'
+
+# Optionally (because of the performance impact of gathering facts and connecting
+# to the target environment to run each task), we can also delegate checking of the
+# target environment to each role. These checks are for pre-requisite settings (e.g.
+# existence of drives, reachability of URLs, permissions on folders...) that are
+# specific to the target host, and so we must have one play per inventory group.
+- name: Check Environment ({{ role_name }}) [SYNC]
+  hosts: {{ role_name }}
+  gather_facts: yes
+  vars:
+    check_environment: yes
+  roles:
+    - '{% raw %}{{ playbook_dir | dirname | dirname | dirname | basename }}{% endraw %}.{{ role_name }}'
+
+# Now we perform the 'intent' on the target hosts
+- name: Manage {{ role_name }} [SYNC]
+  hosts: {{ role_name }}
+  roles:
+    - '{% raw %}{{ playbook_dir | dirname | dirname | dirname | basename }}{% endraw %}.{{ role_name }}'
+
+# Finally (requires installation of the ge.common collection), if the intent is to
+# 'test', we render the results of all tests to HTML and/or JUnit, using the
+# test_reporter role
+- name: Report Test Results [SYNC]
+  hosts: test_reporter
+  tasks:
+    - name: Report tests
+      ansible.builtin.include_role:
+        name: ge.common.test_reporter
+      when: intent == 'test'

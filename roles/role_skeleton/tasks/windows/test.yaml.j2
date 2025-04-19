@@ -1,0 +1,23 @@
+---
+# The purpose of test.yaml is to...
+#   - conduct a deployment validation (achieved by including validate.yaml)
+#   - run any additional smoke tests (to provide reassurance of a working component)
+# This file is unlikely to require change, except to uncomment the section
+# that calls smoke tests, if you have them for this component.
+
+- name: Validate the installation
+  ansible.builtin.include_tasks:
+    file: validate.yaml
+
+# Smoke tests are optional, and require that files named 'test.ps1' (for Windows)
+# and 'test.sh' (for Linux) exist in the role's 'files' subdirectory
+
+# - name: Run smoke tests
+#   ansible.builtin.include_role:
+#     name: ge.common.base_component
+#     tasks_from: '{% raw %}{{ {% endraw %}[ platform, "run_smoke_tests.yaml" ] | path_join{% raw %} }}{% endraw %}'
+#   vars:
+#     download_dir: '{% raw %}{{ {% endraw %}{{ role_name }}_download_path_win{% raw %} }}{% endraw %}'
+#     smoke_test_case_name: TODO - put here the smoke test short title 
+#     smoke_test_case: TODO - put here the smoke test description
+#     smoke_test_success_message: TODO Add here the text to be displayed in case of success

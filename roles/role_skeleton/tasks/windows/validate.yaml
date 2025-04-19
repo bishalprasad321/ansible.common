@@ -1,0 +1,103 @@
+---
+# The purpose of validate.yaml is to conduct Deployment Validation Tests by...
+#   - asserting that expected files are in expected locations
+#   - asserting that the correct version is installed
+#   - asserting that necessary Environment Variables are set
+#   - asserting that appropriate registry keys exist
+#   - asserting that the component is appropriately configured
+# ... and any other appropriate indicators of a successful deployment.
+# Note that we are testing here that everything is set up right, not that
+# the component is operational - which would be the (separate) subject of a
+# smoke test. Validation may be conducted when the 'test' intent is called,
+# but also when a component is unmanaged (<role>.manage == no), in which
+# scenario we want simply to check it is appropriately installed as a pre-requisite.
+#
+# Capture here whatever data is needed to generate one or more test_statements - i.e.
+# statements that evaluate to true (success) or false (failure). Then populate
+# the list variable 'validation_tests' with a list of dictionaries (one dictionary
+# per test) where the keys/values of each dictionary are:
+# test_case_name: A simple name for the test being conducted
+#                e.g. 'Registry Settings Check'
+# test_case: A description that will be added only to the standard Ansible output (as
+#            part of the task name - "ASSERT that 'test_case'")
+# test_statement: The statement that evaluates to a boolean value and indicates
+#                 success (true) or failure (false) of this test
+# success_message: The message to report (e.g. in HTML / Junit) when the test succeeds.
+#                  This should be provided as a list of strings - each list item
+#                  representing a new line
+# failure_message: The message to report when the test fails
+#                  This should be provided as a list of strings - each list item
+#                  representing a new line
+# fail_play_on_test_failure: Whether the play should fail when a test fails or whether to
+#                            continue to run downstream tests on this host (default: no)
+# warn_only: Whether any failure should only be treated as a warning (defaults to 'no')
+# skip_when: A statement that evaluates to true (the test should be skipped) or
+#            false (the test should be included). Defaults to false ('no').
+#            Use this instead of making the task conditional, so that skipped tests
+#            are reported to HTML / Junit reports
+# skip_reason: (optional) The reason that the test is being skipped. This should be
+#              provided as a list of strings - each list item representing a new line 
+
+# If you collate tests in this fashion, the final tasks (which form part of the skeleton
+# template and are marked 'DO NOT CHANGE') will handle for you the central capture of
+# test results in memory. These are then available for reporting at the end of your
+# playbook, which you can make happen by just including the test_reporter role in a play.
+
+# SAMPLE TESTS ONLY:
+#########################################################################################
+# - name: Check for expected files in the installation directory
+#   ansible.windows.win_stat:
+#     path: '{{ [some_path, file_path] | ge.common.win_join_path }}'
+#   loop: '{{ expected_files }}'
+#   loop_control:
+#     loop_var: file_path
+#   register: paths_to_check
+
+# - name: Collate a list that identifies whether the expected files exist
+#   ansible.builtin.set_fact:
+#     expected_files_exist: >-
+#       {{ expected_files_info.results | map(attribute='stat')
+#                                      | map(attribute='exists')
+#                                      | list }}
+
+# - name: Define the tests
+#   ansible.builtin.set_fact:
+#     validation_tests:
+
+#       - test_case_name: Windows Installation Check
+#         test_case: expected installation files exist
+#         test_statement: '{{ expected_files_exist is all }}'
+#         success_message:
+#           - All the expected files were discovered on the target host
+#         failure_message: >-
+#           {{ ["Not all the expected files were found in the installation directory",
+#               "The expected files and their existence on the host are shown below"] +
+#             dict(expected_files | zip(expected_files_exist)) |
+#             dict2items(key_name="File", value_name="Exists?") }}
+
+#       - test_case_name: Windows PATH Environment Variable Check
+#         test_case: the path containing the executables is in the system PATH
+#         test_statement: >-
+#           {{ lookup('ge.common.case_insensitive_dict',
+#                     ansible_env, key_name='PATH') | split(';') |
+#             select('ge.common.same_path', path_to_exes) |
+#             length > 0 }}
+#         success_message:
+#           - The path containing the executables exists in the system PATH
+#         failure_message:
+#           - The path containing the executables could not be found in the system PATH
+
+- ansible.builtin.debug:
+    msg: TODO
+
+- name: Define the tests
+  ansible.builtin.set_fact:
+    validation_tests: []
+
+# DO NOT CHANGE CODE BELOW THIS LINE
+#########################################################################################
+- name: Run the tests
+  ansible.builtin.include_role:
+    name: ge.common.base_component
+    tasks_from: capture_test_results.yaml
+  when: (validation_tests | default(False)) is truthy

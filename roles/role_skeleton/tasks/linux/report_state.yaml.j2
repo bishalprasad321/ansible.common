@@ -1,0 +1,13 @@
+---
+# The purpose of report_state.yaml is to report the state of the component
+# (generally one of 'present' or 'absent'). It is typically called when
+# a 'destroy' intent is being executed on an unmanaged component. Because it
+# is unmanaged (<role>.manage == no), we don't want to destroy it, but we do
+# want to report the state we leave it in.
+
+- name: Get the current state of {{ role_name }} on the system
+  ansible.builtin.include_tasks:
+    file: ./get_state.yaml
+
+- ansible.builtin.debug:
+    msg: TODO - report on the state

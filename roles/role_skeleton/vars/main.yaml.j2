@@ -1,0 +1,20 @@
+---
+# Unlike defaults/main.yaml, this file does NOT hold variables that might be
+# overridden by a user. Instead, consider these variables more like 'constants',
+# or as values that are largely fixed and used only internally by the role.
+# Those for managed_tasks and unmanaged_tasks should be left untouched, as they
+# are used by tasks/main.yaml to help identify the tasks file to include.
+
+########################## ADD ROLE DEPENDENCIES HERE AS A LIST #########################
+{{ role_name }}_dependencies: []
+
+############################ DON'T CHANGE VARS BELOW THIS LINE ##########################
+managed_tasks:
+  apply: apply.yaml
+  test: test.yaml
+  destroy: {% raw %}'{{ {% endraw %}{{ role_name }}_uninstall_on_destroy | ternary("destroy", "report_state"){% raw %} }}{% endraw %}.yaml'
+
+unmanaged_tasks:
+  apply: validate.yaml
+  test: test.yaml
+  destroy: report_state.yaml

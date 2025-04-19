@@ -1,0 +1,124 @@
+---
+# The purpose of validate.yaml is to conduct Deployment Validation Tests by...
+#   - asserting that expected files are in expected locations
+#   - asserting that the correct version is installed
+#   - asserting that necessary Environment Variables are set
+#   - asserting that appropriate registry keys exist
+#   - asserting that the component is appropriately configured
+# ... and any other appropriate indicators of a successful deployment.
+# Note that we are testing here that everything is set up right, not that
+# the component is operational - which would be the (separate) subject of a
+# smoke test. Validation may be conducted when the 'test' intent is called,
+# but also when a component is unmanaged (<role>.manage == no), in which
+# scenario we want simply to check it is appropriately installed as a pre-requisite.
+#
+# Capture here whatever data is needed to generate one or more test_statements - i.e.
+# statements that evaluate to true (success) or false (failure). Then populate
+# the list variable 'validation_tests' with a list of dictionaries (one dictionary
+# per test) where the keys/values of each dictionary are:
+# test_case_name: A simple name for the test being conducted
+#                e.g. 'Registry Settings Check'
+# test_case: A description that will be added only to the standard Ansible output (as
+#            part of the task name - "ASSERT that 'test_case'")
+# test_statement: The statement that evaluates to a boolean value and indicates
+#                 success (true) or failure (false) of this test
+# success_message: The message to report (e.g. in HTML / Junit) when the test succeeds.
+#                  This should be provided as a list of strings - each list item
+#                  representing a new line
+# failure_message: The message to report when the test fails
+#                  This should be provided as a list of strings - each list item
+#                  representing a new line
+# fail_play_on_test_failure: Whether the play should fail when a test fails or whether to
+#                            continue running downstream tests on this host (default: no)
+# warn_only: Whether any failure should only be treated as a warning (defaults to 'no')
+# skip_when: A statement that evaluates to true (the test should be skipped) or
+#            false (the test should be included). Defaults to false ('no').
+#            Use this instead of making the task conditional, so that skipped tests
+#            are reported to HTML / Junit reports
+# skip_reason: (optional) The reason that the test is being skipped. This should be
+#              provided as a list of strings - each list item representing a new line 
+
+# If you collate tests in this fashion, the final tasks (which form part of the skeleton
+# template and are marked 'DO NOT CHANGE') will handle for you the central capture of
+# test results in memory. These are then available for reporting at the end of your
+# playbook, which you can make happen by just including the test_reporter role in a play.
+
+# SAMPLE TESTS ONLY:
+#########################################################################################
+# - name: Get the host's installed packages
+#   ansible.builtin.package_facts:
+#     manager: auto
+
+# - name: Check if zip is at latest version
+#   ansible.builtin.package:
+#     name: zip
+#     state: latest
+#   become: yes
+#   check_mode: yes
+#   diff: yes
+#   changed_when: no
+#   register: zip_version
+
+# - name: Check if unzip is at latest version
+#   ansible.builtin.package:
+#     name: unzip
+#     state: latest
+#   become: yes
+#   check_mode: yes
+#   diff: yes
+#   changed_when: no
+#   register: unzip_version
+
+# - name: Define the tests
+#   ansible.builtin.set_fact:
+#     validation_tests:
+
+#       - test_case_name: Linux Installation Check
+#         test_case: expected installation packages are installed
+#         test_statement: '{{ "zip" in packages.keys() and "unzip" in packages.keys() }}'
+#         success_message:
+#           - Both zip and unzip were discovered on the target host
+#         failure_message: >-
+#           {{ ["Either zip, unzip or both are missing from the target host",
+#               "The expected installations and their existence on the host are shown below"] +
+#               [ {"Installation": "zip", "Exists?": 'zip' in packages.keys()},
+#                 {"Installation": "unzip", "Exists?": 'unzip' in packages.keys()}] }}
+
+#       - test_case_name: Linux Version Check
+#         test_case: zip and unzip installations are at the latest versions
+#         test_statement: >-
+#           {{ not (zip_version.changes.installed is truthy or
+#                   zip_version.changes.updated is truthy or
+#                   unzip_version.changes.installed is truthy or
+#                   unzip_version.changes.updated is truthy) }}
+#         success_message:
+#           - The latest versions of both zip and unzip were discovered on the target host
+#         failure_message: >-
+#           {{ ["Either zip, unzip or both could be updated on the target host",
+#               "The need for update of each on the host is shown below"] +
+#               [ {"Installation": "zip", "Updateable?":
+#                                               zip_version.changes.installed is truthy or
+#                                               zip_version.changes.updated is truthy},
+#                 {"Installation": "unzip", "Updateable?":
+#                                               unzip_version.changes.installed is truthy or
+#                                               unzip_version.changes.updated is truthy}] }}
+#         warn_only: yes
+#         skip_when: '{{ not ("zip" in packages.keys() or "unzip" in packages.keys()) }}'
+#         skip_reason: 
+#           - Neither zip nor unzip are installed
+
+- ansible.builtin.debug:
+    msg: TODO
+
+- name: Define the tests
+  ansible.builtin.set_fact:
+    validation_tests: []
+
+# DO NOT CHANGE CODE BELOW THIS LINE
+#########################################################################################
+- name: Run the tests
+  ansible.builtin.include_role:
+    name: ge.common.base_component
+    tasks_from: capture_test_results.yaml
+  when: (validation_tests | default(False)) is truthy
+  

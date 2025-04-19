@@ -1,0 +1,8 @@
+---
+# The purpose of get_state.yaml is to get the state of the component
+# (typically version(s) present under xyz paths). It is typically called by
+# numerous other task files (e.g. apply.yaml, report_state.yaml, validate.yaml)
+# as these may execute further tasks conditionally based on current state.
+
+ansible.builtin.debug:
+  msg: TODO

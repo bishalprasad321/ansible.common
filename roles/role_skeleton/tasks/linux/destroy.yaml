@@ -1,0 +1,10 @@
+---
+# The purpose of destroy.yaml is to...
+#   - uninstall the component (if necessary)
+#   - remove the component's runtime files IF REQUESTED
+#     (<role>.uninstall_on_destroy == yes)
+# For components that might be shared with other applications, the default for
+# <role>.uninstall_on_destroy should be 'no'
+
+- ansible.builtin.debug:
+    msg: TODO

@@ -1,0 +1,45 @@
+---
+# All variables that the component expects as *input* should be shown here,
+# whether those variables are optional or mandatory. These variables will
+# typically be ones that either MUST be specified as user input or ones
+# that MAY be overriden by user input. Any relevant default values can be
+# provided here, but don't feel the need to provide a default for everything.
+# It is OK for some variables simply to be a mandatory input, in which case
+# they can be included here with empty values, and their values validated
+# prior to use.
+
+# set at global scope (DO NOT DEFAULT HERE):
+# intent: 
+  
+# set at play scope (DO NOT DEFAULT HERE):
+# check_inputs: 
+# check_environment: 
+
+# {{ role_name }}-specific variables
+{{ role_name }}_manage: True
+{{ role_name }}_force_install: False
+{{ role_name }}_uninstall_on_destroy: True
+{{ role_name }}_artifact_repo_win: 
+{{ role_name }}_artifact_kit_win: 
+{{ role_name }}_artifact_repo_lin: 
+{{ role_name }}_artifact_kit_lin:
+
+# overrides
+# (variables that default to the value of globally-specified variables
+#  but that can be overridden with a {{ role_name }}-specific value if desired)
+
+{{ role_name }}_fail_play_on_test_failure: '{% raw %}{{ {% endraw %}fail_play_on_test_failure | default(False, True){% raw %} }}{% endraw %}'
+
+{{ role_name }}_artifact_base_url: '{% raw %}{{ {% endraw %}artifact_base_url | default("", True){% raw %} }}{% endraw %}'
+{{ role_name }}_artifact_user: '{% raw %}{{ {% endraw %}artifact_user | default("", True){% raw %} }}{% endraw %}'
+{{ role_name }}_artifact_password: '{% raw %}{{ {% endraw %}artifact_password | default("", True){% raw %} }}{% endraw %}'
+{{ role_name }}_artifact_url_timeout: '{% raw %}{{ {% endraw %}artifact_url_timeout | default(60, True){% raw %} }}{% endraw %}'
+{{ role_name }}_artifact_download_retries: '{% raw %}{{ {% endraw %}artifact_download_retries | default(2, True){% raw %} }}{% endraw %}'
+{{ role_name }}_artifact_remove: '{% raw %}{{ {% endraw %}artifact_remove | default(False, True){% raw %} }}{% endraw %}'
+{{ role_name}}_artifact_validate_certs: '{% raw %}{{ {% endraw %}artifact_validate_certs | default(True){% raw %} }}{% endraw %}'
+
+{{ role_name }}_download_path_win: '{% raw %}{{ {% endraw %}[ download_base_path_win | default("C:\\Temp", True), "{{ role_name }}" ] | ge.common.win_join_path{% raw %} }}{% endraw %}'
+{{ role_name }}_download_path_lin: '{% raw %}{{ {% endraw %}[ download_base_path_lin | default("/tmp", True), "{{ role_name }}" ] | ge.common.win_join_path{% raw %} }}{% endraw %}'
+
+{{ role_name }}_installation_path_win: '{% raw %}{{ {% endraw %}[ installation_base_path_win | default("C:\\GE_Products", True), "{{ role_name }}" ] | ge.common.win_join_path{% raw %} }}{% endraw %}'
+{{ role_name }}_installation_path_lin: '{% raw %}{{ {% endraw %}[ installation_base_path_lin | default("/GE_Products", True), "{{ role_name }}" ] | ge.common.join_path{% raw %} }}{% endraw %}'

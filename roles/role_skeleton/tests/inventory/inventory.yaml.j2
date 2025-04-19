@@ -1,0 +1,39 @@
+---
+# The purpose of the inventory is to:
+#   - identify the host addresses of the nodes in the target environment
+#   - set the connection parameters to those nodes
+#   - name each node with a descriptive alias
+#   - map Atomic Components to each node (by reference to the alias) such as to identify
+#     the exact components that will be managed on each node
+# Note that the inventory is divided into 2 parts under the umbrella 'all' dictionary:
+#   - hosts: aliases for each node, holding their host address / connection params
+#   - children: inventory groups (named after roles) that map roles to host aliases
+# Note too that templating has been used here so that certain values can be picked
+# up from environment variables on the Ansible Controller. This supports running
+# quick tests in a development environment where control can easily be exerted
+# over environment variables (e.g. when working with VS Code Remote Containers,
+# they can be set in devcontainer.json under a 'remoteEnv' key)
+all:
+  hosts:
+    test_windows:
+      ansible_host: "{% raw %}{{ {% endraw %}lookup('env', 'TEST_WINDOWS_IP'){% raw %} }}{% endraw %}"
+      ansible_connection: winrm
+      ansible_port: "{% raw %}{{ {% endraw %}lookup('env', 'WINRM_PORT'){% raw %} }}{% endraw %}"
+      ansible_winrm_scheme: "{% raw %}{{ {% endraw %}lookup('env', 'WINRM_SCHEME'){% raw %} }}{% endraw %}"
+      ansible_winrm_server_cert_validation: "{% raw %}{{ {% endraw %}lookup('env', 'WINRM_SERVER_CERT_VALIDATION'){% raw %} }}{% endraw %}"
+      ansible_winrm_transport: "{% raw %}{{ {% endraw %}lookup('env', 'WINRM_TRANSPORT'){% raw %} }}{% endraw %}"
+      ansible_user: "{% raw %}{{ {% endraw %}lookup('env', 'TEST_WINDOWS_USER'){% raw %} }}{% endraw %}"
+      ansible_password: "{% raw %}{{ {% endraw %}lookup('env', 'TEST_WINDOWS_PASSWORD'){% raw %} }}{% endraw %}"
+    test_results_host:
+      ansible_host: "{% raw %}{{ {% endraw %} lookup('env', 'TEST_REPORTER_IP') {% raw %} }}{% endraw %}"
+      ansible_user: "{% raw %}{{ {% endraw %} lookup('env', 'TEST_REPORTER_USER') {% raw %} }}{% endraw %}"
+      ansible_password: "{% raw %}{{ {% endraw %} lookup('env', 'TEST_REPORTER_PASSWORD') {% raw %} }}{% endraw %}"
+      ansible_connection: local
+      ansible_python_interpreter: "{% raw %}{{ {% endraw %} lookup('env', 'TEST_REPORTER_PYTHON_INTERPRETER') | default(ansible_playbook_python, True) {% raw %} }}{% endraw %}"
+  children:
+    {{ role_name }}:
+      hosts:
+        test_windows:
+    test_reporter:
+      hosts:
+        test_results_host:

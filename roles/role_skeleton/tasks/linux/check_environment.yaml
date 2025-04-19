@@ -1,0 +1,17 @@
+# The purpose of this file is to check the key aspects of the target host environment
+# that will enable a successful 'apply'. For example, can we write to the paths
+# into which we'll want to download and/or install products? Or into which we'll want
+# to template configuration files?
+# The thinking is that these tasks should be called early in the playbook, such that
+# the playbook can FAIL EARLY if there are environmental issues to be addressed. However,
+# to call each role's check_environment.yaml against each equivalent inventory group
+# will be expensive on the overall performance of the automation. It may be that this
+# is not wanted all the time!
+# Given this thinking, it is OK to test permissions etc by actually DOING some necessary
+# tasks early in this file (rather than simply trying to test whether it ought to be
+# possible for them to be done). However, given these tasks may not get called on every
+# run, the doing of certain tasks here should not mean that those tasks can get
+# substituted out of apply.yaml
+
+- ansible.builtin.debug:
+    msg: TODO
